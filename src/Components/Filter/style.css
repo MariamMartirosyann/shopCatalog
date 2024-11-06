@@ -11,12 +11,24 @@
 .categoryItem {
   display: flex;
   flex-direction: column;
+  
 }
 
 .clearFilters{
     margin-top: '1rem'; padding: '0.5rem';background-color:rgb(61, 61, 240),;color: '#fff'; border: 'none'; cursor: 'pointer' 
 }
 
+.progressBar{
+    margin-left: 10%;
+}
+button{
+    margin-bottom: 10px;
+}
+.notFound{
+  margin: auto;
+  font-size: large;
+  font-weight: bold;
+}
 /* Medium devices (landscape tablets, 768px and up) */
 @media only screen and (max-width: 768px) {
   .main {
@@ -32,6 +44,7 @@
    
   }
   .categoryItem{
-    margin:5px 25px;
+    margin:30px;
+    width: 60%;
   }
 }
