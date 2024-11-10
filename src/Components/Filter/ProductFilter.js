@@ -4,9 +4,9 @@ import { ProductList } from "../ProductList/ProductList";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useDebounce } from "../../Utils/Hooks/useDebounce";
 import "./style.css";
+import { useSelector } from "react-redux";
 
 const ProductFilter = () => {
-  const [allProducts, setAllProducts] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState([]);
   const [selectedBrand, setSelectedBrand] = useState([]);
@@ -14,16 +14,17 @@ const ProductFilter = () => {
   const [selectedRating, setSelectedRating] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searchItem, setSearchItem] = useState("");
-  const [isFilterMenuVisible, setIsFilterMenuVisible] = useState(true);
   const [sortCriteria, setSortCriteria] = useState("popularity");
 
+  const isFilterMenuVisible = useSelector((store) => store.common.visibility);
   // Debounced values for search and price range
-  const debouncedSearchItem = useDebounce(searchItem, 300);
+  const debouncedSearchItem = useDebounce(searchItem, 3000);
   const debouncedPriceRange = useDebounce(priceRange, 300);
 
   // Load user preferences on mount
   useEffect(() => {
-    const savedFilters = JSON.parse(localStorage.getItem("userPreferences")) || {};
+    const savedFilters =
+      JSON.parse(localStorage.getItem("userPreferences")) || {};
     setSelectedCategory(savedFilters.selectedCategory || []);
     setSelectedBrand(savedFilters.selectedBrand || []);
     setPriceRange(savedFilters.priceRange || [0, 1000]);
@@ -115,26 +116,31 @@ const ProductFilter = () => {
     });
 
   const applyFilters = () => {
-    setLoading(true);
     setFilteredData(filtered);
-    setLoading(false);
   };
 
   const savePreferences = () => {
     const preferences = {
       selectedCategory,
+      filteredData,
       selectedBrand,
       priceRange,
       selectedRating,
       searchItem,
       sortCriteria,
+      catalogData,
     };
     localStorage.setItem("userPreferences", JSON.stringify(preferences));
   };
-
   useEffect(() => {
-    applyFilters();
+    setLoading(true);
+    const timer = setTimeout(() => {
+      applyFilters();
+      setLoading(false);
+    }, 700);
     savePreferences();
+
+    return () => clearTimeout(timer);
   }, [
     debouncedSearchItem,
     selectedCategory,
@@ -146,28 +152,20 @@ const ProductFilter = () => {
 
   return (
     <div>
-      <button
-        onClick={() => setIsFilterMenuVisible(!isFilterMenuVisible)}
-        className="toggleFilterButton"
-      >
-        {isFilterMenuVisible ? "Hide Filters" : "Show Filters"}
-      </button>
       <div className="main">
         {isFilterMenuVisible ? (
           <div className="filtersDiv">
-           
-            
-
             <div className="categoryItem">
-            <h2>Filters</h2>
-            <button className="clearFilters" onClick={clearFilters}>
-              Clear Filters
-            </button>
+              <h2>Filters</h2>
+              <button className="clearFilters" onClick={clearFilters}>
+                Clear Filters
+              </button>
               <input
                 type="text"
+                data-testid="search"
                 value={searchItem}
                 onChange={(e) => setSearchItem(e.target.value)}
-                placeholder="Type to search"
+                placeholder="Search"
               />
             </div>
             <div className="categoryItem">
@@ -213,7 +211,7 @@ const ProductFilter = () => {
 
             <div className="categoryItem">
               <h3>Price Range</h3>
-              <span>${debouncedPriceRange[0]} - Min Range</span> 
+              <span>${debouncedPriceRange[0]} - Min Range</span>
               <input
                 type="range"
                 min="0"
@@ -221,7 +219,7 @@ const ProductFilter = () => {
                 value={priceRange[0]}
                 onChange={(e) => handlePriceRangeChange(0, e.target.value)}
               />
-               <span>${debouncedPriceRange[1]} - Max Range</span> 
+              <span>${debouncedPriceRange[1]} - Max Range</span>
               <input
                 type="range"
                 min="0"
@@ -245,13 +243,11 @@ const ProductFilter = () => {
                 </label>
               ))}
             </div>
-
-            
           </div>
         ) : null}
 
         {loading ? (
-          <CircularProgress size="40%" style={{ margin: "auto" }} />
+          <CircularProgress size="30%" style={{ margin: "auto" }} />
         ) : filteredData.length > 0 ? (
           <ProductList products={filteredData} />
         ) : (
